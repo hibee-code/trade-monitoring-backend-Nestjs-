@@ -1,98 +1,144 @@
+# Trade Monitoring Backend
+
 <p align="center">
   <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
 </p>
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+A scalable **NestJS-based** service designed to monitor cryptocurrency P2P trades on Bybit and verify corresponding payments through fintech providers like Paystack. It acts as a bridge between crypto trades and fiat payment confirmations—automating decision-making, sending real-time alerts, and ensuring secure, efficient trade operations.
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+---
 
-## Description
+## 🚀 Features
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+-   **Bybit P2P Trade Monitoring**: Automatically polls and detects new orders/status updates (Paid, Completed, Cancelled).
+-   **Payment Verification**: Secure webhook endpoint identifying fiat payments via **Paystack**.
+-   **Automated Matching**: Smart logic to match incoming payments with pending trades based on amount and metadata.
+-   **Real-time Notifications**: Instant alerts to **Telegram** for matched trades, new orders, or irregularities.
+-   **Audit Logging**: Comprehensive database logging of all trade events, payment receipts, and matching decisions for compliance and dispute resolution.
+-   **Modular Architecture**: Built with NestJS modules (Trade, Payment, Notification, Audit, Decision) for easy extensibility.
 
-## Project setup
+## 🏗 Architecture
 
-```bash
-$ yarn install
+The system follows an event-driven architecture using `@nestjs/event-emitter`.
+
+```mermaid
+graph TD
+    A[Bybit P2P API] -->|Polls Orders| B(TradeService)
+    C[Paystack Webhook] -->|Payment Event| D(PaymentController)
+    B -->|Emit 'trade.created'| E{DecisionService}
+    D -->|Emit 'payment.received'| E
+    E -->|Match Found?| F[Verify Trade & Payment]
+    F -->|Log Event| G(AuditService)
+    F -->|Send Alert| H(NotificationService)
+    H -->|Message| I[Telegram API]
 ```
 
-## Compile and run the project
+## 🛠 Prerequisites
 
-```bash
-# development
-$ yarn run start
+-   **Node.js** (v18+)
+-   **Yarn** or **NPM**
+-   **PostgreSQL** Database
+-   **Bybit Account** (for API keys)
+-   **Paystack Account** (for Webhooks)
+-   **Telegram Bot** (for Notifications)
 
-# watch mode
-$ yarn run start:dev
+## ⚙️ Installation
 
-# production mode
-$ yarn run start:prod
+1.  **Clone the repository**:
+    ```bash
+    git clone <repository-url>
+    cd trade-monitoring-backend
+    ```
+
+2.  **Install dependencies**:
+    ```bash
+    yarn install
+    ```
+
+## 🔐 Configuration
+
+Create a `.env` file in the root directory (copied from `.env.example` if available). Configure the following variables:
+
+```ini
+# Database (PostgreSQL)
+DB_HOST=localhost
+DB_PORT=5432
+DB_USERNAME=postgres
+DB_PASSWORD=your_password
+DB_DATABASE=trade_monitor
+
+# Bybit P2P API
+BYBIT_API_KEY=your_bybit_api_key
+BYBIT_API_SECRET=your_bybit_api_secret
+BYBIT_BASE_URL=https://api.bybit.com
+
+# Paystack
+PAYSTACK_SECRET_KEY=your_paystack_secret_key
+
+# Telegram Notifications
+TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+TELEGRAM_CHAT_ID=your_chat_id
 ```
 
-## Run tests
+## ▶️ Running the Application
 
+**Development Mode:**
 ```bash
-# unit tests
-$ yarn run test
-
-# e2e tests
-$ yarn run test:e2e
-
-# test coverage
-$ yarn run test:cov
+yarn start:dev
 ```
 
-## Deployment
-
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
-
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
-
+**Production Mode:**
 ```bash
-$ yarn install -g @nestjs/mau
-$ mau deploy
+yarn build
+yarn start:prod
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+## 🧪 Testing
 
-## Resources
+```bash
+# Unit tests
+yarn test
 
-Check out a few resources that may come in handy when working with NestJS:
+# E2E tests
+yarn test:e2e
+```
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+## 📡 API Endpoints
 
-## Support
+### Payment Webhook
+**POST** `/payment/webhook`
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+Receives webhook events from Paystack. Requires `x-paystack-signature` header for verification.
 
-## Stay in touch
+**Payload Example:**
+```json
+{
+  "event": "charge.success",
+  "data": {
+    "reference": "ref_12345",
+    "amount": 500000,
+    "currency": "NGN",
+    "status": "success",
+    "customer": {
+        "email": "customer@email.com"
+    }
+  }
+}
+```
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+## 📂 Project Structure
 
-## License
+```
+src/
+├── audit/          # Audit logging module
+├── common/         # Common utilities
+├── decision/       # Core matching logic module
+├── notification/   # Notification services (Telegram)
+├── payment/        # Paystack integration & Webhooks
+├── trade/          # Bybit P2P monitoring
+└── app.module.ts   # Main application module
+```
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+## 📄 License
+
+This project is [MIT licensed](LICENSE).
